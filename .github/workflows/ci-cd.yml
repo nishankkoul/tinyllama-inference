@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"  # Prevent loop
     runs-on: self-hosted
 
     env:
@@ -45,6 +46,7 @@ jobs:
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git tag ${{ steps.version.outputs.next_tag }}
+        git commit --allow-empty -m "Tagging release ${{ steps.version.outputs.next_tag }} [skip ci]"
         git push origin ${{ steps.version.outputs.next_tag }}
 
     - name: Build Docker image
