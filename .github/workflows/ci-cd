@@ -1,0 +1,90 @@
+name: CI/CD: Build and Deploy to GKE using Helm
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    env:
+      DOCKER_REPO: nishankkoul/tinyllama-server
+      CHART_DIR: helm-tinyllama
+      PROJECT_ID: future-campaign-467305-q6
+      CLUSTER_NAME: tinyllama-inference-cluster
+      CLUSTER_ZONE: us-central1-a
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Copy model into build context
+      run: |
+        mkdir -p models
+        cp /home/nishankkoulpet/models/tinyllama.gguf models/
+
+    - name: Determine next version tag
+      id: version
+      run: |
+        LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
+        if [[ -z "$LATEST_TAG" ]]; then
+          NEXT_TAG="v1.0"
+        else
+          VERSION_NUMBER=$(echo $LATEST_TAG | cut -d 'v' -f2)
+          MAJOR=$(echo $VERSION_NUMBER | cut -d. -f1)
+          MINOR=$(echo $VERSION_NUMBER | cut -d. -f2)
+          NEXT_MINOR=$((MINOR + 1))
+          NEXT_TAG="v${MAJOR}.${NEXT_MINOR}"
+        fi
+        echo "next_tag=$NEXT_TAG" >> $GITHUB_OUTPUT
+
+    - name: Tag the new release
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git tag ${{ steps.version.outputs.next_tag }}
+        git push origin ${{ steps.version.outputs.next_tag }}
+
+    - name: Build Docker image
+      run: |
+        docker build -t $DOCKER_REPO:${{ steps.version.outputs.next_tag }} .
+
+    - name: Login to Docker Hub
+      run: |
+        echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+    - name: Push Docker image
+      run: |
+        docker push $DOCKER_REPO:${{ steps.version.outputs.next_tag }}
+
+    - name: Authenticate to GCP and GKE
+      run: |
+        echo "${{ secrets.GCP_SA_KEY }}" > /tmp/key.json
+        gcloud auth activate-service-account --key-file=/tmp/key.json
+        gcloud config set project $PROJECT_ID
+        gcloud config set compute/zone $CLUSTER_ZONE
+        gcloud container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE --project $PROJECT_ID
+
+    - name: Update image tag in Helm values.yaml
+      run: |
+        sed -i 's/tag: .*/tag: "${{ steps.version.outputs.next_tag }}"/' $CHART_DIR/values.yaml
+
+    - name: Helm Lint
+      run: helm lint $CHART_DIR
+
+    - name: Helm Dry Run
+      run: |
+        helm upgrade --install llama-api $CHART_DIR \
+          --namespace default \
+          --wait \
+          --atomic \
+          --dry-run
+
+    - name: Helm Deploy
+      run: |
+        helm upgrade --install llama-api $CHART_DIR \
+          --namespace default \
+          --wait \
+          --atomic
