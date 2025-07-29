@@ -9,5 +9,5 @@ COPY models/tinyllama.gguf /models/tinyllama.gguf
 # Expose the API port
 EXPOSE 8080
 
-# Just pass the arguments; base image already has the entrypoint set
-CMD ["-m", "/models/tinyllama.gguf", "--port", "8080", "--host", "0.0.0.0"]
+# Run the LLM server with batching and limited output tokens
+CMD ["-m", "/models/tinyllama.gguf", "--port", "8080", "--host", "0.0.0.0", "--parallel", "4", "--cont-batching", "--n-predict", "5"]
