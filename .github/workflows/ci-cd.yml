@@ -1,4 +1,4 @@
-name: CI/CD: Build and Deploy to GKE using Helm
+name: "CI/CD: Build and Deploy to GKE using Helm"
 
 on:
   push:
