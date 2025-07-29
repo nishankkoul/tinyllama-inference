@@ -42,16 +42,13 @@ jobs:
         echo "next_tag=$NEXT_TAG" >> $GITHUB_OUTPUT
 
     - name: Tag and Push Release Tag
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # Make sure this is your Personal Access Token (PAT)
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         
         git tag ${{ steps.version.outputs.next_tag }}
         
-        # Use PAT in remote URL
-        git remote set-url origin https://${GH_PAT}@github.com/nishankkoul/tinyllama-inference.git
+        git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/nishankkoul/tinyllama-inference.git
         
         git push origin ${{ steps.version.outputs.next_tag }}
 
