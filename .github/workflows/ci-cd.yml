@@ -43,16 +43,16 @@ jobs:
 
     - name: Tag and Push Release Tag
       env:
-        GH_PAT: ${{ secrets.GH_PAT }}
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}  # Make sure this is your Personal Access Token (PAT)
       run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
         git tag ${{ steps.version.outputs.next_tag }}
         
-        # Add personal access token to the remote URL
-        git remote set-url origin https://nishankkoul:${GH_PAT}@github.com/nishankkoul/tinyllama-inference.git
-
-        # Explicitly authenticate using PAT (not the GitHub token)
+        # Use PAT in remote URL
+        git remote set-url origin https://${GITHUB_TOKEN}@github.com/nishankkoul/tinyllama-inference.git
+        
         git push origin ${{ steps.version.outputs.next_tag }}
 
     - name: Build Docker image
