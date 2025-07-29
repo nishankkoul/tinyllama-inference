@@ -1,4 +1,4 @@
-name: "CI/CD: Build and Deploy to GKE using Helm"
+name: "CI/CD: Build and Deploy to GKE with Helm + Versioning"
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"  # Prevent loop
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: self-hosted
 
     env:
@@ -20,49 +20,50 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-    - name: Copy model into build context
+    - name: Set up version tag
+      id: version
+      run: |
+        # Get latest tag
+        latest=$(git tag --sort=-v:refname | head -n 1)
+        if [[ -z "$latest" ]]; then
+          latest="v1.0.0"
+        fi
+
+        # Extract major, minor, patch
+        IFS='.' read -r -a parts <<< "${latest#v}"
+        major=${parts[0]}
+        minor=${parts[1]}
+        patch=${parts[2]}
+        
+        # Bump patch
+        next_tag="v$major.$minor.$((patch+1))"
+
+        echo "next_tag=$next_tag" >> "$GITHUB_OUTPUT"
+        echo "🔖 Next version: $next_tag"
+
+    - name: Copy model into Docker context
       run: |
         mkdir -p models
         cp /home/nishankkoulpet/models/tinyllama.gguf models/
 
-    - name: Determine next version tag
-      id: version
-      run: |
-        LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
-        if [[ -z "$LATEST_TAG" ]]; then
-          NEXT_TAG="v1.0"
-        else
-          VERSION_NUMBER=$(echo $LATEST_TAG | cut -d 'v' -f2)
-          MAJOR=$(echo $VERSION_NUMBER | cut -d. -f1)
-          MINOR=$(echo $VERSION_NUMBER | cut -d. -f2)
-          NEXT_MINOR=$((MINOR + 1))
-          NEXT_TAG="v${MAJOR}.${NEXT_MINOR}"
-        fi
-        echo "next_tag=$NEXT_TAG" >> $GITHUB_OUTPUT
-
-    - name: Tag and Push Release Tag
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        
-        git tag ${{ steps.version.outputs.next_tag }}
-        
-        git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/nishankkoul/tinyllama-inference.git
-        
-        git push origin ${{ steps.version.outputs.next_tag }}
-
     - name: Build Docker image
-      run: |
-        docker build -t $DOCKER_REPO:${{ steps.version.outputs.next_tag }} .
+      run: docker build -t $DOCKER_REPO:${{ steps.version.outputs.next_tag }} .
 
     - name: Login to Docker Hub
-      run: |
-        echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+      run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
     - name: Push Docker image
+      run: docker push $DOCKER_REPO:${{ steps.version.outputs.next_tag }}
+
+    - name: Create Git tag and push
       run: |
-        docker push $DOCKER_REPO:${{ steps.version.outputs.next_tag }}
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git tag ${{ steps.version.outputs.next_tag }}
+        git push origin ${{ steps.version.outputs.next_tag }}
 
     - name: Authenticate to GCP and GKE
       run: |
@@ -74,7 +75,7 @@ jobs:
 
     - name: Update image tag in Helm values.yaml
       run: |
-        sed -i 's/tag: .*/tag: "${{ steps.version.outputs.next_tag }}"/' $CHART_DIR/values.yaml
+        sed -i 's|tag: .*|tag: "${{ steps.version.outputs.next_tag }}"|' $CHART_DIR/values.yaml
 
     - name: Helm Lint
       run: helm lint $CHART_DIR
