@@ -51,7 +51,7 @@ jobs:
         git tag ${{ steps.version.outputs.next_tag }}
         
         # Use PAT in remote URL
-        git remote set-url origin https://${GITHUB_TOKEN}@github.com/nishankkoul/tinyllama-inference.git
+        git remote set-url origin https://${GH_PAT}@github.com/nishankkoul/tinyllama-inference.git
         
         git push origin ${{ steps.version.outputs.next_tag }}
 
