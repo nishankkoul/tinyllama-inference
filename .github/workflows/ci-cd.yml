@@ -107,5 +107,4 @@ jobs:
       - name: Helm Deploy to GKE
         run: |
           helm upgrade --install tinyllama $CHART_DIR \
-            --namespace default \
-            --wait
+            --namespace default
