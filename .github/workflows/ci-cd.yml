@@ -34,7 +34,7 @@ jobs:
           tag=$(grep 'tag:' $CHART_DIR/values.yaml | awk '{print $2}')
           version_number=${tag#v}
           next_version=$(awk -F. -v OFS=. '{$NF++; print}' <<< "$version_number")
-          echo "next_tag=v$next_version" >> "$GITHUB_OUTPUT"
+          echo "next_tag=v$next_version" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -44,20 +44,20 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          echo "Tag is: ${{ steps.get_tag.outputs.next_tag }}"
-          docker build -t $DOCKER_REPO:${{ steps.get_tag.outputs.next_tag }} .
-          docker push $DOCKER_REPO:${{ steps.get_tag.outputs.next_tag }}
+          echo "Tag is: $next_tag"
+          docker build -t $DOCKER_REPO:$next_tag .
+          docker push $DOCKER_REPO:$next_tag
 
       - name: Update Helm values.yaml with new tag
         run: |
-          sed -i "s/tag: .*/tag: \"${{ steps.get_tag.outputs.next_tag }}\"/" $CHART_DIR/values.yaml
+          sed -i "s/tag: .*/tag: \"$next_tag\"/" $CHART_DIR/values.yaml
 
       - name: Commit updated values.yaml and skip CI
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add $CHART_DIR/values.yaml
-          git commit -m "Update image tag to ${{ steps.get_tag.outputs.next_tag }} [skip ci]" || echo "No changes to commit"
+          git commit -m "Update image tag to $next_tag [skip ci]" || echo "No changes to commit"
           git push
 
       - name: Authenticate to GCP
