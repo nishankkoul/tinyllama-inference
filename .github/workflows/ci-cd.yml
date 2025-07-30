@@ -26,7 +26,7 @@ jobs:
       - name: Download model from GCS
         run: |
           mkdir -p models
-          curl -o models/tinyllama.gguf "https://storage.cloud.google.com/tinyllama--model-nishank/tinyllama.gguf"
+          curl -o models/tinyllama.gguf "https://storage.googleapis.com/tinyllama--model-nishank/tinyllama.gguf"
 
       - name: Extract current image tag from values.yaml
         id: get_tag
