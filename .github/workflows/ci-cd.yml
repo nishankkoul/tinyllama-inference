@@ -44,6 +44,7 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
+          echo "Tag is: ${{ steps.get_tag.outputs.next_tag }}"
           docker build -t $DOCKER_REPO:${{ steps.get_tag.outputs.next_tag }} .
           docker push $DOCKER_REPO:${{ steps.get_tag.outputs.next_tag }}
 
