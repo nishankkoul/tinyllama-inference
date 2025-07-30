@@ -61,7 +61,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add $CHART_DIR/values.yaml
           git commit -m "Update image tag to $next_tag [skip ci]" || echo "No changes to commit"
-          git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/nishankkoul/tinyllama-inference.git
+          git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/nishankkoul/tinyllama-inference.git
           git push origin main
 
       - name: Authenticate to GCP
