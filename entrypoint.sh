@@ -2,7 +2,7 @@
 set -e
 
 echo "[INFO] Starting LLM server..."
-./server -m /models/tinyllama.gguf \
+./llama-server -m /models/tinyllama.gguf \
   --port 8080 \
   --host 0.0.0.0 \
   --parallel 4 \
@@ -11,7 +11,7 @@ echo "[INFO] Starting LLM server..."
 
 SERVER_PID=$!
 
-# Wait for the server to boot up
+# Wait for the server to start up
 sleep 2
 
 echo "[INFO] Sending pre-warming request..."
@@ -24,5 +24,5 @@ curl -s -X POST http://localhost:8080/completion \
 
 echo "[INFO] Pre-warming complete."
 
-# Keep the server process running
+# Keep the server running
 wait $SERVER_PID
