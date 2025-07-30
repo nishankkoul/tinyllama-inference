@@ -79,12 +79,17 @@ jobs:
         run: |
           gcloud container clusters get-credentials $CLUSTER_NAME --zone $CLUSTER_ZONE --project $PROJECT_ID
       
-      - name: Install gke-gcloud-auth-plugin
+      - name: Install gke-gcloud-auth-plugin (Ubuntu 24.04 safe)
         run: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" \
-            | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg \
-            | sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
+          # Download and store the GPG key properly
+          curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+            gpg --dearmor | sudo tee /usr/share/keyrings/cloud.google.gpg > /dev/null
+      
+          # Add the Google Cloud SDK repo with signed-by reference
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | \
+            sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list > /dev/null
+      
+          # Update and install plugin
           sudo apt-get update
           sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
