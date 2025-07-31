@@ -17,8 +17,7 @@ echo "[INFO] Sending pre-warming request..."
 curl -s -X POST http://localhost:8080/completion \
   -H "Content-Type: application/json" \
   -d '{
-    "prompt": "Hello",
-    "n_predict": 1
+    "prompt": "Hello"
   }' > /dev/null
 
 echo "[INFO] Pre-warming complete."
