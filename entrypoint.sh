@@ -7,6 +7,7 @@ echo "[INFO] Starting LLM server..."
   --host 0.0.0.0 \
   --parallel 4 \
   --cont-batching \
+  --n-predict 50 &
 
 SERVER_PID=$!
 
