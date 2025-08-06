@@ -90,8 +90,7 @@ echo "[INFO] Starting LLM server..."
   --port 8080 \
   --host 0.0.0.0 \
   --parallel 4 \
-  --cont-batching \
-  --n-predict 5 &
+  --cont-batching 
 
 SERVER_PID=$!
 
@@ -981,3 +980,4 @@ jobs:
 
 
 The CI/CD pipeline is now fully automated, providing reliable, consistent deployments with proper testing and rollback capabilities. The system can handle multiple developers and environments while maintaining deployment quality and traceability. 
+
