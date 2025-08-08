@@ -379,9 +379,7 @@ affinity: {}
      --num-nodes 2 \
      --disk-size 35 \
      --node-pool-name cpu-pool \
-     --enable-autoscaling \
-     --min-nodes 2 \
-     --max-nodes 4
+     --num-nodes 2 
    ```
 
 2. **Verify the cluster creation**:
@@ -613,10 +611,10 @@ export default function () {
 #### 5 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 1.13s
-- **95th Percentile (p95)**: 1.56s
-- **Error Rate**: 0% (297 requests successful)
-- **Actual RPS Achieved**: 4.87 RPS
+- **Average Latency**: 1.18s
+- **95th Percentile (p95)**: 1.83s
+- **Error Rate**: 2.32% (7/301 requests failed)
+- **Actual RPS Achieved**: 4.71 RPS
 
 **CPU Usage Analysis**:
 - **Highest Pod CPU**: 3578m (≈3.5 vCPUs)
@@ -627,10 +625,10 @@ export default function () {
 #### 10 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 1.6s
-- **95th Percentile (p95)**: 2.24s
-- **Error Rate**: 0% (588 requests successful)
-- **Actual RPS Achieved**: 9.57
+- **Average Latency**: 2.79s
+- **95th Percentile (p95)**: 7.03s
+- **Error Rate**: 2.35% (12/510 requests failed)
+- **Actual RPS Achieved**: 8.23
 
 **CPU Usage Analysis**:
 - **Max Pod CPU**: 4390m (4.39 vCPUs)
@@ -642,9 +640,9 @@ export default function () {
 #### 25 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 3.9s
-- **95th Percentile (p95)**: 6.26s
-- **Error Rate**: 0.00% (761 requests successful)
+- **Average Latency**: 4.9s
+- **95th Percentile (p95)**: 13.26s
+- **Error Rate**: 7.31% (55/761 requests failed)
 - **Actual RPS Achieved**: 11.81 RPS
 
 **CPU Usage Analysis**:
@@ -657,10 +655,10 @@ export default function () {
 #### 50 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 4.1 seconds
-- **95th Percentile (p95)**: 7.29 seconds
-- **Error Rate**: 3.17% (44/1204 requests failed)
-- **Actual RPS Achieved**: 11 RPS
+- **Average Latency**: 7.1 seconds
+- **95th Percentile (p95)**: 12.29 seconds
+- **Error Rate**: 23.17% (208/899 requests failed)
+- **Actual RPS Achieved**: 12.28 RPS
 
 **CPU Usage Analysis**:
 - **Saturated Pods**: 4 pods at ~8 cores each
@@ -694,10 +692,10 @@ Based on the load testing results with **max_count: 20 tokens**, here's the comp
 
 | Target RPS | Actual RPS | Duration | Avg Latency | P95 Latency | Error Rate | Pod Count | CPU Usage |
 |------------|------------|----------|-------------|-------------|------------|-----------|-----------|
-| 5 RPS | 4.87 RPS | 1 min | 1.13 s | 1.56 s | 0% | 4 pods | 3.5 vCPU max |
-| 10 RPS | 9.57 RPS | 1 min | 1.6 s | 2.24 s | 0% | 8 pods | 4.39 vCPU max |
-| 25 RPS | 8 RPS | 2 min | 2.10 s | 4.87 s | 0.41% | 8 pods | 4.57 vCPU avg |
-| 50 RPS | 11 RPS | 2 min | 4.1 s | 7.29 s | 3.71% | 8 pods | 8 vCPU saturated |
+| 5 RPS | 4.71 RPS | 1 min | 1.18 s | 1.83 s | 2.32% | 4 pods | 3.5 vCPU max |
+| 10 RPS | 8.23 RPS | 1 min | 2.79 s | 7.03 s | 2.35% | 8 pods | 4.39 vCPU max |
+| 25 RPS | 11.81 RPS | 1 min | 4.9 s | 13.26 s | 7.31% | 8 pods | 4.57 vCPU avg |
+| 50 RPS | 12.28 RPS | 1 min | 7.1 s | 12.29 s | 23.17% | 8 pods | 8 vCPU saturated |
 
 ### Performance Visualization
 
@@ -719,29 +717,9 @@ Based on the load testing results with **max_count: 20 tokens**, here's the comp
 *Figure 2: Pod Scaling Behavior in Response to Increasing Load*
 
 **Key Observations**:
-- **HPA Trigger Point**: Scaling initiated at 5 RPS target
+- **HPA Trigger Point**: Scaling initiated at 10 RPS target
 - **Scaling Effectiveness**: Pod count increased but actual RPS didn't scale linearly
 - **Warm-up Impact**: New pods require time to reach full capacity
-
-#### Optimal RPS Calculation
-
-**Conservative Estimate** (based on linear extrapolation):
-- **Current Best**: 2 RPS at 3186ms p95
-- **Target Latency**: 200ms p95
-- **Estimated Optimal RPS**: ~0.125 RPS (2 RPS × 200ms/3186ms)
-
-**Practical Recommendation**:
-- **Optimal RPS**: **1-2 RPS** for production use
-- **Reasoning**: Provides best balance of throughput and latency
-- **Latency Expectation**: 1-3 seconds for 20-token responses
-
-### Performance Summary
-
-#### Current System Capabilities
-- **Optimal Throughput**: 1-2 RPS with acceptable latency
-- **Maximum Throughput**: 8-11 RPS with degraded performance
-- **Error Resilience**: Excellent (0-3.71% error rates)
-- **Scaling Effectiveness**: Good HPA response, poor latency 
 
 The analysis reveals that while the TinyLLaMA deployment demonstrates excellent reliability and scaling capabilities, significant optimization is required to achieve production-grade performance. The system is well-suited for development and testing scenarios but needs architectural improvements for high-throughput production use.
 
