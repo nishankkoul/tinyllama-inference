@@ -657,7 +657,7 @@ export default function () {
 **Performance Metrics**:
 - **Average Latency**: 7.1 seconds
 - **95th Percentile (p95)**: 17.29 seconds
-- **Error Rate**: 23.17% (208/899 requests failed)
+- **Error Rate**: 23.17% (169/737 requests failed)
 - **Actual RPS Achieved**: 12.28 RPS
 
 **CPU Usage Analysis**:
