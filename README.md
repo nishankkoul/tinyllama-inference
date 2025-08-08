@@ -535,13 +535,18 @@ Create a `k6-load-test.js` file for load testing:
 
 ```javascript
 import http from 'k6/http';
-import { sleep } from 'k6';
 
 export const options = {
-  stages: [
-    { duration: '1m', target: 5 }, // maintain 5 VUs for 1 minute
-  ],
-  vus: 5,
+  scenarios: {
+    constant_rps: {
+      executor: 'constant-arrival-rate',
+      rate: 5,                    // 5 iterations (requests) per second
+      timeUnit: '1s',             // per second
+      duration: '1m',             // total test duration
+      preAllocatedVUs: 100,         // initial VUs to allocate
+      maxVUs: 200,                 // k6 can scale up if requests take longer
+    },
+  },
 };
 
 export default function () {
@@ -553,14 +558,10 @@ export default function () {
   });
 
   const params = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
   };
 
   http.post(url, payload, params);
-
-  sleep(1); // 1 request per second per VU => 5 RPS
 }
 ```
 
@@ -577,56 +578,9 @@ export default function () {
    - **Model**: TinyLLaMA-1.1B-Chat-v1.0-GGUF
    - **Max Tokens**: 20 (consistent across all tests)
    - **Prompt**: "Once upon a time"
-   - **Test Duration**: 1-2 minutes per test
+   - **Test Duration**: 1 minute per test
    - **Target RPS**: 5, 10, 25, 50, 100
 
-### Load Test Execution
-
-1. **5 RPS Test** (1 minute duration):
-   
-   ```bash
-   # Update script for 5 RPS
-   sed -i 's/target: 5/target: 5/g' k6-load-test.js
-   sed -i 's/vus: 5/vus: 5/g' k6-load-test.js
-   
-   # Run test
-   k6 run k6-load-test.js
-   ```
-
-2. **10 RPS Test** (1 minute duration):
-   
-   ```bash
-   # Update script for 10 RPS
-   sed -i 's/target: 5/target: 10/g' k6-load-test.js
-   sed -i 's/vus: 5/vus: 10/g' k6-load-test.js
-   
-   # Run test
-   k6 run k6-load-test.js
-   ```
-
-3. **25 RPS Test** (2 minutes duration):
-   
-   ```bash
-   # Update script for 25 RPS
-   sed -i 's/target: 5/target: 25/g' k6-load-test.js
-   sed -i 's/varget: 10/target: 25/g' k6-load-test.js
-   sed -i 's/vus: 10/vus: 25/g' k6-load-test.js
-   sed -i "s/duration: '1m'/duration: '2m'/g" k6-load-test.js
-   
-   # Run test
-   k6 run k6-load-test.js
-   ```
-
-4. **50 RPS Test** (2 minutes duration):
-   
-   ```bash
-   # Update script for 50 RPS
-   sed -i 's/target: 25/target: 50/g' k6-load-test.js
-   sed -i 's/vus: 25/vus: 50/g' k6-load-test.js
-   
-   # Run test
-   k6 run k6-load-test.js
-   ```
 
 ### Monitoring During Tests
 
@@ -651,7 +605,7 @@ export default function () {
    kubectl top pods -l app.kubernetes.io/name=tinyllama
    
    # Monitor continuously
-   watch -n 5 'kubectl top pods -l app.kubernetes.io/name=tinyllama'
+   watch 'kubectl top pods -l app.kubernetes.io/name=tinyllama'
    ```
 
 ### Test Results Analysis
@@ -659,10 +613,10 @@ export default function () {
 #### 5 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 1051.67 ms
-- **95th Percentile (p95)**: 2377 ms
-- **Error Rate**: 0% (146 requests successful)
-- **Actual RPS Achieved**: 2 RPS
+- **Average Latency**: 1.13s
+- **95th Percentile (p95)**: 1.56s
+- **Error Rate**: 0% (297 requests successful)
+- **Actual RPS Achieved**: 4.87 RPS
 
 **CPU Usage Analysis**:
 - **Highest Pod CPU**: 3578m (≈3.5 vCPUs)
@@ -673,10 +627,10 @@ export default function () {
 #### 10 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 1340 ms
-- **95th Percentile (p95)**: 3186 ms
-- **Error Rate**: 0% (259 requests successful)
-- **Actual RPS Achieved**: 4.5 RPS
+- **Average Latency**: 1.6s
+- **95th Percentile (p95)**: 2.24s
+- **Error Rate**: 0% (588 requests successful)
+- **Actual RPS Achieved**: 9.57
 
 **CPU Usage Analysis**:
 - **Max Pod CPU**: 4390m (4.39 vCPUs)
@@ -685,13 +639,13 @@ export default function () {
 - **Light Load Pods**: ~100-200m CPU usage
 - **Average CPU Usage**: ~1.46 vCPU across 8 pods
 
-#### 25 RPS Test Results (2 minutes)
+#### 25 RPS Test Results (1 minute)
 
 **Performance Metrics**:
-- **Average Latency**: 2.10 seconds
-- **95th Percentile (p95)**: 4.87 seconds
-- **Error Rate**: 0.41% (4/972 requests failed)
-- **Actual RPS Achieved**: 8 RPS
+- **Average Latency**: 3.9s
+- **95th Percentile (p95)**: 6.26s
+- **Error Rate**: 0.00% (761 requests successful)
+- **Actual RPS Achieved**: 11.81 RPS
 
 **CPU Usage Analysis**:
 - **Saturated Pods**: 4 older pods (6k-8k milliCPU each)
@@ -700,7 +654,7 @@ export default function () {
 - **Average per Pod**: ≈4.57 cores
 - **System Status**: Nearing sustained load capacity
 
-#### 50 RPS Test Results (2 minutes)
+#### 50 RPS Test Results (1 minute)
 
 **Performance Metrics**:
 - **Average Latency**: 4.1 seconds
@@ -716,7 +670,7 @@ export default function () {
 ### Key Findings
 
 1. **Scaling Behavior**:
-   - **HPA Effectiveness**: Successfully triggered at 5 RPS
+   - **HPA Effectiveness**: Successfully triggered at 10 RPS
 
 2. **Performance Characteristics**:
    - **Latency Degradation**: Significant increase with higher RPS
@@ -740,8 +694,8 @@ Based on the load testing results with **max_count: 20 tokens**, here's the comp
 
 | Target RPS | Actual RPS | Duration | Avg Latency | P95 Latency | Error Rate | Pod Count | CPU Usage |
 |------------|------------|----------|-------------|-------------|------------|-----------|-----------|
-| 5 RPS | 2 RPS | 1 min | 1051.67 ms | 2377 ms | 0% | 4 pods | 3.5 vCPU max |
-| 10 RPS | 4.5 RPS | 1 min | 1340 ms | 3186 ms | 0% | 8 pods | 4.39 vCPU max |
+| 5 RPS | 4.87 RPS | 1 min | 1.13 s | 1.56 s | 0% | 4 pods | 3.5 vCPU max |
+| 10 RPS | 9.57 RPS | 1 min | 1.6 s | 2.24 s | 0% | 8 pods | 4.39 vCPU max |
 | 25 RPS | 8 RPS | 2 min | 2.10 s | 4.87 s | 0.41% | 8 pods | 4.57 vCPU avg |
 | 50 RPS | 11 RPS | 2 min | 4.1 s | 7.29 s | 3.71% | 8 pods | 8 vCPU saturated |
 

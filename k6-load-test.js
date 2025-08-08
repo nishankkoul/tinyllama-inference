@@ -1,15 +1,20 @@
 import http from 'k6/http';
-import { sleep } from 'k6';
 
 export const options = {
-  stages: [
-    { duration: '1m', target: 5 }, // maintain 5 VUs for 1 minute
-  ],
-  vus: 5,
+  scenarios: {
+    constant_rps: {
+      executor: 'constant-arrival-rate',
+      rate: 5,                    // 5 iterations (requests) per second
+      timeUnit: '1s',             // per second
+      duration: '1m',             // total test duration
+      preAllocatedVUs: 100,         // initial VUs to allocate
+      maxVUs: 200,                 // k6 can scale up if requests take longer
+    },
+  },
 };
 
 export default function () {
-  const url = 'http://<lb-ip>:8080/completion';
+  const url = 'http://<lb-ip>/completion';
 
   const payload = JSON.stringify({
     prompt: 'Once upon a time',
@@ -17,12 +22,8 @@ export default function () {
   });
 
   const params = {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
   };
 
   http.post(url, payload, params);
-
-  sleep(1); // 1 request per second per VU => 5 RPS
 }
