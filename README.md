@@ -701,7 +701,7 @@ Based on the load testing results with **max_count: 20 tokens**, here's the comp
 
 #### Graph 1: RPS vs Latency Analysis
 
-<img width="1979" height="1180" alt="image" src="https://github.com/user-attachments/assets/47bb681c-0a0b-4a49-b5dd-38873bbb32fa" />
+<img width="1355" height="943" alt="image" src="https://github.com/user-attachments/assets/5c11ad5d-ac6a-461c-babc-191bf77834cd" />
 
 *Figure 1: Relationship between Request Rate (RPS) and Response Latency (Average)*
 
@@ -912,4 +912,5 @@ jobs:
 
 
 The CI/CD pipeline is now fully automated, providing reliable, consistent deployments with proper testing and rollback capabilities. The system can handle multiple developers and environments while maintaining deployment quality and traceability. 
+
 
