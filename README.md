@@ -656,7 +656,7 @@ export default function () {
 
 **Performance Metrics**:
 - **Average Latency**: 7.1 seconds
-- **95th Percentile (p95)**: 12.29 seconds
+- **95th Percentile (p95)**: 17.29 seconds
 - **Error Rate**: 23.17% (208/899 requests failed)
 - **Actual RPS Achieved**: 12.28 RPS
 
@@ -695,7 +695,7 @@ Based on the load testing results with **max_count: 20 tokens**, here's the comp
 | 5 RPS | 4.71 RPS | 1 min | 1.18 s | 1.83 s | 2.32% | 4 pods | 3.5 vCPU max |
 | 10 RPS | 8.23 RPS | 1 min | 2.79 s | 7.03 s | 2.35% | 8 pods | 4.39 vCPU max |
 | 25 RPS | 11.81 RPS | 1 min | 4.9 s | 13.26 s | 7.31% | 8 pods | 4.57 vCPU avg |
-| 50 RPS | 12.28 RPS | 1 min | 7.1 s | 12.29 s | 23.17% | 8 pods | 8 vCPU saturated |
+| 50 RPS | 12.28 RPS | 1 min | 7.1 s | 17.29 s | 23.17% | 8 pods | 8 vCPU saturated |
 
 ### Performance Visualization
 
